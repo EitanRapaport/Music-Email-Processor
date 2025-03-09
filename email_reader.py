@@ -20,7 +20,8 @@ def parse_line(line):
             end_timestamp = end_timestamp.group(1)
             end_timestamp = convert_to_seconds(end_timestamp)
         return url, end_timestamp
-    except:
+    except Exception as e:
+        print(e)
         return  "",0
 
 

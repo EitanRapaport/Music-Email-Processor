@@ -31,55 +31,69 @@ def compress_file(file, log):
     else:
         start = time()
         log.info(f'4.1 Compressing: -- {file}')
-        raw_sound = AudioSegment.from_file(file)
-        compressed_sound = compress_dynamic_range(raw_sound, -20, 6)
-        new_file = re.sub(r"\.wav", "_C.wav", file)
-        compressed_sound.export(new_file , format='wav')
-
-        log.info("4.2 Deleting -- " + file)
+        new_file_name = generate_new_file_name(file, "_C")
+        compress_audio_file(file, new_file_name)
         os.remove(file)
-        end = time()
-        elapsed = end - start
-        log.info(f"4.3 Compressed -- {new_file} took {elapsed} seconds")
-        return new_file
+        elapsed = measure_time(start)
+        log.info(f"4.2 Compressed -- {new_file_name} took {elapsed} seconds")
+        return new_file_name
+
+def compress_audio_file(file, new_file_name):
+    raw_sound = AudioSegment.from_file(file)
+    compressed_sound = compress_dynamic_range(raw_sound, -20, 6)
+    compressed_sound.export(new_file_name , format='wav')
 
 
 def normalize_audio_file(file, log):
     if not file.endswith('.wav'):
         pass
-
     else:
         log.info(f"5.1 Normalizing -- {file}")
         start = time()
-        raw_sound = AudioSegment.from_file(file)
-        normalized_file = normalize(raw_sound, 0.1)
-        new_file_name = re.sub(r"\.wav", "N.wav", file)
-        normalized_file.export(new_file_name, format='wav')
-
-        log.info("5.2 Deleting -- " + file)
+        new_file_name = generate_new_file_name(file, "N")
+        normalize_audio(file, new_file_name)
         os.remove(file)
-        end = time()
-        elapsed = end - start
-        log.info(f"5.3 Normalized -- {new_file_name} took {elapsed} seconds")
+        elapsed = measure_time(start)
+        log.info(f"5.2 Normalizing -- {new_file_name} took {elapsed} seconds")
         return new_file_name
+
+
+def generate_new_file_name(file, prefix):
+    """
+    Generate a new file name by adding a prefix to the file name
+    N stands for normalized
+    S stands for silence
+    C stands for compressed
+    """
+    return re.sub(r"\.wav", f"{prefix}.wav", file)
+
+def normalize_audio(file, new_file_name):
+    raw_sound = AudioSegment.from_file(file)
+    normalized_file = normalize(raw_sound, 0.1)
+    normalized_file.export(new_file_name, format='wav')
 
 
 def add_silence_to_file(file, log):
     log.info(f"6.1 Adding silence to file -- {file}")
     start = time()
+    new_file = generate_new_file_name(file, "S")
+    add_silence_to_audio(file, new_file)
+    os.remove(file)
+    elapsed = measure_time(start)
+    log.info(f"6.2 Added silence to -- {new_file} took {elapsed} seconds")
+    return new_file
+
+
+def measure_time(start):
+    end = time()
+    return end - start
+
+def add_silence_to_audio(file, new_file):
     raw_sound = AudioSegment.from_file(file)
     sample = raw_sound[:SILENCE_AT_BEGINNING_AND_END_MS]
     sample = sample - 70
     output = sample + raw_sound + sample
-    new_file = re.sub(r"\.wav", "S.wav", file)
     output.export(new_file, format='wav')
-
-    log.info("6.2 Deleting -- " + file)
-    os.remove(file)
-    end = time()
-    elapsed = end - start
-    log.info(f"6.3 Added silence to -- {new_file} took {elapsed} seconds")
-    return new_file
 
 
 def match_target_amplitude(sound, target_dBFS):
@@ -116,13 +130,16 @@ def log_classification_results(classification_results, log):
 def classify_all_audio_files_if_needed(arguments, log):
     classification_results = []
     if arguments.no_classification is False:
-        files = get_file_list()
-        log.info("7.1 CLASSIFYING FILES")
-        for _, file in enumerate(files):
-            results = classify_single_audio_file(file)
-            cr = ClassificationResults(file, results["Silence"], results["Applause"],
-                                       results["Speech"], results["Length"])
-            classification_results.append(cr)
-        log.info("7.2 END CLASSIFYING")
-        log_classification_results(classification_results, log)
+        classify_audio_files(log, classification_results)
     return classification_results
+
+def classify_audio_files(log, classification_results):
+    files = get_file_list()
+    log.info("7.1 CLASSIFYING FILES")
+    for _, file in enumerate(files):
+        results = classify_single_audio_file(file)
+        cr = ClassificationResults(file, results["Silence"], results["Applause"],
+                                       results["Speech"], results["Length"])
+        classification_results.append(cr)
+    log.info("7.2 END CLASSIFYING")
+    log_classification_results(classification_results, log)

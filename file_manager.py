@@ -16,14 +16,28 @@ def normalize_all_filenames(log):
 def normalize_filename(file: str, log):
     if not file.endswith('.wav'):
         return
-    new_name = file.replace("：", "")
-    new_name = file.replace(":", "")
     log.info(f"3.1 Normalizing {file}")
-    #fix cyrillic characters
-    new_name = re.sub(r'\W+', ' ', cyrtranslit.to_latin(file, "ru"))
-    new_name = re.sub(' wav', ".wav", new_name)
+    new_name = replace_known_bad_chars(file)
     os.replace(file, new_name)
     log.info(f"3.2 Replaced. Old file name: {file}, New file name: {new_name}")
+    return new_name
+
+
+def replace_known_bad_chars(file):
+    new_name = remove_colons_from_filename(file)
+    new_name = remove_cyrillic_letters(file)
+    return new_name
+
+
+def remove_cyrillic_letters(file):
+    new_name = re.sub(r'\W+', ' ', cyrtranslit.to_latin(file, "ru"))
+    new_name = re.sub(' wav', ".wav", new_name)
+    return new_name
+
+
+def remove_colons_from_filename(file):
+    new_name = file.replace("：", "")
+    new_name = file.replace(":", "")
     return new_name
 
 

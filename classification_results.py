@@ -8,4 +8,3 @@ class ClassificationResults:
     applause: list[int]
     speech: list[int]
     length: int
-        
