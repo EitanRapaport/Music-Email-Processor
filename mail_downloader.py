@@ -12,9 +12,7 @@ def download_all_uris(urls_and_timestamps, logger, include_vid=False):
     for _, url in enumerate(urls_and_timestamps):
         try:
             download(link=url[0], logger=logger, preferred_codec=EXT, download_video=include_vid)
-            title = get_new_file_name(files_info)
-            fi = FileInfo(f"{title}", url[1], url[0])
-            files_info.append(fi)
+            append_file_to_file_list(files_info, url)
         except KeyboardInterrupt:
             logger.info("Keyboard Interrupt")
             exit(1)
@@ -22,6 +20,11 @@ def download_all_uris(urls_and_timestamps, logger, include_vid=False):
             logger.error("Encountered exception: ", e, "for file: ", url)
     logger.info("2. Finished downloading")
     return files_info
+
+def append_file_to_file_list(files_info, url):
+    title = get_new_file_name(files_info)
+    fi = FileInfo(f"{title}", url[1], url[0])
+    files_info.append(fi)
 
 
 def download(link, logger, preferred_codec='wav', download_video=False):

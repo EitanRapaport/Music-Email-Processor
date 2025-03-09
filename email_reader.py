@@ -11,18 +11,26 @@ def convert_to_seconds(timestamp):
 
 def parse_line(line):
     try:
-        url = re.match("(https?://[^\s]+)", line).group(0)
-        url = re.sub("&list=.*", "", url)
+        url = parse_url_from_line(line)
         end_timestamp = re.match(".*till ([0-9]{1,2}.[0-9]{1,2})", line)
         if end_timestamp is None:
             end_timestamp = 0
         else:
-            end_timestamp = end_timestamp.group(1)
-            end_timestamp = convert_to_seconds(end_timestamp)
+            end_timestamp = convert_end_timestamp_to_seconds(end_timestamp)
         return url, end_timestamp
     except Exception as e:
         print(e)
         return  "",0
+
+def convert_end_timestamp_to_seconds(end_timestamp):
+    end_timestamp = end_timestamp.group(1)
+    end_timestamp = convert_to_seconds(end_timestamp)
+    return end_timestamp
+
+def parse_url_from_line(line):
+    url = re.match("(https?://[^\s]+)", line).group(0)
+    url = re.sub("&list=.*", "", url)
+    return url
 
 
 def read_email():
